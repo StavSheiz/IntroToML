@@ -1,104 +1,95 @@
 from math import copysign
+from sklearn.metrics import accuracy_score
+import numpy
 
 
-def fit(example_set):
-    w = [None] * 10
-    for idx in range(0, 9):
-        label_class_set(example_set)
-        w[idx] = get_weight_pocket([0, 0], example_set)
+def test(x, y, w_multi):
+    preds = []
+    actual = []
 
-    return w
-
-
-def test_data(test_set, w):
-    confusion_matrix = init_confusion_matrix()
-
-    for item in test_set:
-        prediction = predict(item, w)
-        update_confusion_matrix(item, prediction, confusion_matrix)
-
-    calc_confusion_matrix_results(confusion_matrix)
-    return confusion_matrix
+    for idx in range(0, x.shape[0]):
+        # extract x(t), y(t)
+        xt, yt = get_xt_yt(x, y, idx)
 
 
-def predict(item, w):
-    confidence_scores = list(map(lambda conf: conf*item.label, w))
-    max_confidence = max(confidence_scores)
+        # init confidence and predictions per class
+        conf_multi = []
+        class_preds = []
 
-    return confidence_scores.index(max_confidence)
+        # predict for each class
+        for p_class in range(0,9):
+            conf = numpy.inner(xt, w_multi[p_class])
 
+            if conf < 0:
+                prediction = 0
+            else:
+                prediction = 1
 
-def update_confusion_matrix(item, prediction, confusion_matrix):
-    for idx in range (0, 9):
-        if item.label == idx and idx == prediction:
-            confusion_matrix[idx][item.label]["TP"] = confusion_matrix[idx][item.label]["TP"] + 1
-        if item.label != idx and idx != prediction:
-            confusion_matrix[idx][item.label]["TN"] = confusion_matrix[idx][item.label]["TN"] + 1
-        if item.label != idx and idx == prediction:
-            confusion_matrix[idx][item.label]["FP"] = confusion_matrix[idx][item.label]["FP"] + 1
-        if item.label == idx and idx != prediction:
-            confusion_matrix[idx][item.label]["FN"] = confusion_matrix[idx][item.label]["FN"] + 1
+            conf_multi.append(conf)
+            class_preds.append(prediction)
 
+        # get the class with the highest confidence
+        preds.append(numpy.argmax(numpy.array(conf_multi)))
+        actual.append(yt)
 
-def calc_confusion_matrix_results(confusion_matrix):
-    for row_idx in range(0, 9):
-        for col_idx in range(0, 9):
-            cell = confusion_matrix[row_idx][col_idx]
-            cell["ACC"] = (cell["TP"]+cell["TN"])/(cell["TP"]+cell["TN"]+cell["FP"]+cell["FN"])
-            cell["TPR"] = cell["TP"]/(cell["TP"]+cell["FN"])
-            cell["TNR"] = cell["TN"]/(cell["TN"]+cell["FP"])
+    return preds, actual
 
 
-def init_confusion_matrix():
-    confusion_matrix = [[None] * 10] * 10 # using index 10 as total of all classes
+def train(x_train, y_train, max_iterations):
+    best_w = w = numpy.random.uniform(-1.0, 1.0, (10, 785))
 
-    for row_idx in range(0, 9):
-        for col_idx in range(0, 9):
-            confusion_matrix[row_idx][col_idx] = {
-                "TP": 0,
-                "TN": 0,
-                "FP": 0,
-                "FN": 0
-            }
+    curr_preds, curr_actual = test(x_train, y_train, w)
+    min_error = get_errors(curr_preds, curr_actual)
 
-    return confusion_matrix
+    for i in range(max_iterations):
+        misclassified_idx = get_misclassified(curr_preds, curr_actual)
 
+        if misclassified_idx.size > 0:
+            xt, yt = get_xt_yt(x_train, y_train, misclassified_idx[0])
 
-def label_class_set(class_idx, example_set):
-    for example in example_set:
-        example.class_label = 1 if example[class_idx] == 1 else -1
+            update_w(xt, yt, w)
+            curr_preds, curr_actual = test(x_train, y_train, w)
+            errors_w = get_errors(curr_preds, curr_actual)
 
+            # save pocket
+            if errors_w < min_error:
+                best_w = w
+                min_error = errors_w
+        else:
+            return w
 
-# all of this may need refactor because w, example.label should be vectors
-def get_weight_pocket(w_init, example_set):
-    w = w_init
-    pocket = {'w': w, 'value': 0}
-
-    for example in example_set: # might need to change this to some decided limit for iterations?
-        new_w = get_single_weight_pla(w, example)
-        new_w_eval = evaluate_w(w, example_set)
-        if pocket['value'] < new_w_eval:
-            pocket['value'] = new_w_eval
-            pocket['w'] = new_w
-
-    return pocket['w']
+    return best_w
 
 
-# example.label - original label vector, for example for label 0 -> [1,0,0,0,0,0,0,0,0,0]
-# example.class_label - label added for the classifier, for example for class 0 -> 1 if example label is 0, -1 if not.
-def get_single_weight_pla(w, example):
-    new_w = w
-    if example.class_label == copysign(1, w):
-        new_w = w + example.class_label * example.label
+def get_errors(preds, actual):
+    accuracy = accuracy_score(actual, preds)
+    error_rate = 1 - accuracy
 
-    return new_w
+    return error_rate
 
 
-def evaluate_w(w, example_set):
-    count = 0
+def get_misclassified(preds, actual):
+    preds_arr = numpy.asarray(preds)
+    actual_arr = numpy.asarray(actual)
+    misclassified = numpy.where(actual_arr != preds_arr)
 
-    for example in example_set:
-        if example.class_label == copysign(1, w * example.label):
-            count = count + 1
+    return misclassified[0]
 
-    return count
+
+def update_w(xt, yt, w):
+
+    for i in range(10):
+        w[i] = w[i] + -1 * numpy.array(xt)
+
+
+def get_xt_yt(x, y, idx):
+    # extract x(t)
+    xrow = x.iloc[idx]
+    y_idx = xrow.name
+    xt = xrow.tolist()
+    xt.insert(0, 1)
+
+    # prepare binary of current class and extract y(t)
+    yt = int(y.get(y_idx))
+
+    return xt, yt
