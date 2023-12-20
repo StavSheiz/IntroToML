@@ -2,9 +2,7 @@ Perceptron learning for MMN11
 
 Results:
 
-![confusion_matrix.png](confusion_matrix.png)
-
-(Image may change after each run, updated accuracy and sensitivity are printed in console)
+![confusion_matrix_1.png](confusion_matrix_1.png)
 
 <h3>Results after a 10 iterations run: </h3> 
 
