@@ -38,4 +38,4 @@ Sensitivity per class:
 
 The results of the algorithm improve the more iterations it runs - we can see that the accuracy after 50 iterations is about 25% better than the accuracy after only 10 iterations, but even after only 10 iterations the majority of the examples are labeled correctly.
 
-We can see that some digits are much more sensitive than others, possibly due to the randomly chosen initial weight vectors, the misclassified example chosen for each iteration and the random distibution of labels between the test data and the training data.
+We can see that some digits are much more sensitive than others, possibly due to the misclassified examples chosen for each iteration and the random distribution of labels between the test data and the training data.

@@ -1,14 +1,14 @@
-import numpy
+import numpy as np
 
 
 def test(x, w_multi):
     result_matrix = x.dot(w_multi.T)
-    x["preds"] = result_matrix.apply(numpy.argmax, axis=1)
+    x["preds"] = result_matrix.apply(np.argmax, axis=1)
 
 
 def train(x_train, y_train_onehot, max_iterations):
     # init weights vector for all classes
-    best_w_multi = numpy.random.uniform(0, 0, (10, 785))
+    best_w_multi = np.random.uniform(0, 0, (10, 785))
 
     # for each class, add label '1' if the example belongs to the class, else '-1'
     y_train_onehot_labels = y_train_onehot.apply(lambda col: col * 2 - 1)
@@ -38,8 +38,8 @@ def train(x_train, y_train_onehot, max_iterations):
 
 
 def get_errors(x_train, y_train_onehot_labels, w):
-    all_preds = numpy.sign(numpy.dot(x_train.values, w))
-    return numpy.sum(all_preds != y_train_onehot_labels)
+    all_preds = np.sign(np.dot(x_train.values, w))
+    return np.sum(all_preds != y_train_onehot_labels)
 
 
 def run_pla(x, y, w):
@@ -49,16 +49,16 @@ def run_pla(x, y, w):
         xt, yt = get_xt_yt(x, y, idx)
 
         # predict for single class
-        pred = numpy.sign(numpy.inner(xt, w))
+        pred = np.sign(np.inner(xt, w))
         if yt != pred:
-            w = w + yt * numpy.array(xt)
+            w = w + yt * np.array(xt)
 
     return is_misclassified, w
 
 
 def get_misclassified_idx(x_train, y_train_onehot_labels, w):
-    all_preds = numpy.sign(numpy.dot(x_train.values, w))
-    row_indices = numpy.where(all_preds != y_train_onehot_labels)
+    all_preds = np.sign(np.dot(x_train.values, w))
+    row_indices = np.where(all_preds != y_train_onehot_labels)
 
     if len(row_indices) != 0:
         return True, row_indices[0][0]
