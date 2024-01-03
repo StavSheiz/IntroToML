@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 
 def test(x, w_multi):
@@ -6,64 +7,59 @@ def test(x, w_multi):
     x["preds"] = result_matrix.apply(np.argmax, axis=1)
 
 
-def train(x_train, y_train_onehot, max_iterations):
+def train(x_train, y_train, max_iterations):
+    y_train_int = y_train.astype(int)
+    y_train_onehot = pd.get_dummies(y_train_int).astype(int)
+
     # init weights vector for all classes
-    best_w_multi = np.random.uniform(0, 0, (10, 785))
+    best_w_multi = np.random.uniform(-1, 1, (10, 785))
 
     # for each class, add label '1' if the example belongs to the class, else '-1'
     y_train_onehot_labels = y_train_onehot.apply(lambda col: col * 2 - 1)
 
-    # train each class separately
-    for i in range(10):
-        best_w = w = best_w_multi[i]
-        min_error = get_errors(x_train, y_train_onehot_labels.iloc[:, i], w)
+    w = best_w_multi
+    min_error = x_train.shape[0]
+    error_count, idx_error = get_errors(x_train, y_train_int, w)
 
-        for epoch in range(max_iterations):
-            is_misclassified, w = run_pla(x_train, y_train_onehot_labels.iloc[:, i], w)
+    errors_for_epoc = list()
 
-            if is_misclassified:
-                errors_w = get_errors(x_train, y_train_onehot_labels.iloc[:, i], w)
+    for epoch in range(max_iterations):
 
-                # save pocket
-                if errors_w < min_error:
-                    best_w = w
-                    min_error = errors_w
-            else:
-                best_w_multi[i] = w
-                break
+        if error_count > 0:
+            # update weights for all classes according to their result on the misclassified example
+            for i in range(10):
+                xt, yt = get_xt_yt(x_train, y_train_onehot_labels.iloc[:, i], idx_error)
 
-        best_w_multi[i] = best_w
+                # predict for single class
+                p = np.inner(xt, w[i])
+                pred = np.sign(p).astype(int)
+                if yt != pred:
+                    w[i] = w[i] + yt * np.array(xt)
 
-    return best_w_multi
+            error_count, idx_error = get_errors(x_train, y_train_int, w)
+            errors_for_epoc.append(error_count)
 
+            # save pocket
+            if error_count < min_error:
+                best_w_multi = w
+                min_error = error_count
+        else:
+            best_w_multi = w
+            break
 
-def get_errors(x_train, y_train_onehot_labels, w):
-    all_preds = np.sign(np.dot(x_train.values, w))
-    return np.sum(all_preds != y_train_onehot_labels)
-
-
-def run_pla(x, y, w):
-    is_misclassified, idx = get_misclassified_idx(x, y, w)
-
-    if is_misclassified:
-        xt, yt = get_xt_yt(x, y, idx)
-
-        # predict for single class
-        pred = np.sign(np.inner(xt, w))
-        if yt != pred:
-            w = w + yt * np.array(xt)
-
-    return is_misclassified, w
+    return best_w_multi, errors_for_epoc
 
 
-def get_misclassified_idx(x_train, y_train_onehot_labels, w):
-    all_preds = np.sign(np.dot(x_train.values, w))
-    row_indices = np.where(all_preds != y_train_onehot_labels)
+def get_errors(x_train, y_train, w):
+    all_preds = x_train.dot(w.T).apply(np.argmax, axis=1)
+    errors = (all_preds != y_train)
+    error_rows = errors.idxmax()
+    total_errors = np.sum(errors)
 
-    if len(row_indices) != 0:
-        return True, row_indices[0][0]
+    if total_errors != 0:
+        return total_errors, error_rows
     else:
-        return False, -1
+        return total_errors, -1
 
 
 def get_xt_yt(x, y, idx):
@@ -73,6 +69,6 @@ def get_xt_yt(x, y, idx):
     xt = xrow.tolist()
 
     # extract y(t)
-    yt = int(y.get(y_idx))
+    yt = y.get(y_idx)
 
     return xt, yt
