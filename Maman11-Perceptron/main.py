@@ -28,13 +28,13 @@ def run_perceptron():
     x_train.insert(0, 'Bias', 1)
     x_test.insert(0, 'Bias', 1)
 
-    w, loss = train(x_train, y_train, 50)
+    w, loss, test_loss = train(x_train, y_train, x_test, y_test, 100)
     test(x_test, w)
     actual = y_test.astype(int)
     preds = x_test["preds"]
 
     # Plot the loss graph
-    plt.plot(range(50), loss, marker='o')
+    plt.plot(range(100), loss, test_loss, marker='o')
     plt.xlabel('Epoch')
     plt.ylabel('Zero-One Loss')
     plt.title('Training Loss over Epochs')
