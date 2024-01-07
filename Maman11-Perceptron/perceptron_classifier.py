@@ -29,13 +29,10 @@ def train(x_train, y_train, x_test, y_test, max_iterations):
 
         if error_count > 0:
             # update weights for all classes according to their result on the misclassified example
-            xt = x_train.loc[idx_error]
-            yt = y_train_onehot_labels.loc[idx_error]
+            x_errors = x_train.loc[idx_error]
+            yt_errors = y_train_onehot_labels.loc[idx_error]
 
-            ytshape = yt.values.reshape((10,1))
-            xtshape = xt.values.reshape((1, 785))
-
-            w = w + np.dot(ytshape, xtshape)
+            w = w + yt_errors.T.dot(x_errors)
 
             error_count, idx_error = get_errors(x_train, y_train_int, w)
 
@@ -58,10 +55,9 @@ def train(x_train, y_train, x_test, y_test, max_iterations):
 def get_errors(x_train, y_train, w):
     all_preds = x_train.dot(w.T).apply(np.argmax, axis=1)
     errors = (all_preds != y_train)
-    error_rows = errors.idxmax()
     total_errors = np.sum(errors)
 
     if total_errors != 0:
-        return total_errors, error_rows
+        return total_errors, errors[errors].index.tolist()
     else:
         return total_errors, -1
