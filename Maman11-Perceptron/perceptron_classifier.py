@@ -28,7 +28,8 @@ def train(x_train, y_train, max_iterations):
         if error_count > 0:
             # update weights for all classes according to their result on the misclassified example
             for i in range(10):
-                xt, yt = get_xt_yt(x_train, y_train_onehot_labels.iloc[:, i], idx_error)
+                xt = x_train.loc[idx_error]
+                yt = y_train_onehot_labels.loc[idx_error][i]
 
                 # predict for single class
                 p = np.inner(xt, w[i])
@@ -60,15 +61,3 @@ def get_errors(x_train, y_train, w):
         return total_errors, error_rows
     else:
         return total_errors, -1
-
-
-def get_xt_yt(x, y, idx):
-    # extract x(t)
-    xrow = x.iloc[idx]
-    y_idx = xrow.name
-    xt = xrow.tolist()
-
-    # extract y(t)
-    yt = y.get(y_idx)
-
-    return xt, yt
