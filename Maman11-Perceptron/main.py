@@ -45,7 +45,6 @@ def run_perceptron():
     test_display = ConfusionMatrixDisplay(test_cmatrix)
     test_display.plot()
     plt.savefig('confusion_matrix.png')
-
     plt.show()
 
     print(f'accuracy: {accuracy_score(actual, preds)}')
