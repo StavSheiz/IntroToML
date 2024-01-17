@@ -1,15 +1,8 @@
-# This is a sample Python script.
-
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from linear_regression import train, test
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score
 import matplotlib.pyplot as plt
-import pandas as pd
-
-import numpy as np
 
 
 def run_linear_regression():

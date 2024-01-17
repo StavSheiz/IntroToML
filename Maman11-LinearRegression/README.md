@@ -6,9 +6,9 @@ Results:
 
 <h3>Results: </h3> 
 
-Accuracy: 0.2316
+Accuracy: 0.8573
 
 
-The results of the algorithm are mostly consistent (~0.2 accuracy) in every run even though the test and example cases are selected randomly every time.
+The results of the algorithm are mostly consistent (~0.85 accuracy) in every run even though the test and example cases are selected randomly every time. These results are similar to the softmax and perceptron implementations.
 
-The overall results are much worse than the Perceptron model's results, but while the Perceptron's miscalssifications are spread evenly across all classes the Linear Regression's miscalssifications are mostly around the classes "nearer" the actual class - this is because Linear Regression regards the classes as actual numbers - locations on a grid and the Perceptron regards them as tags that could be any other string. 
+This implementation runs faster than the others because it does not require iterations to achieve the high accuracy.

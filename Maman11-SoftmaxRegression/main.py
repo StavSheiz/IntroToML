@@ -7,10 +7,9 @@ from sklearn.model_selection import train_test_split
 from softmax_classifier import train, test
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score
 import matplotlib.pyplot as plt
-import pandas as pd
 
 
-def run_perceptron():
+def run_softmax():
     print(f'Starting softmax regression')
 
     # Fetch MNIST dataset
@@ -21,16 +20,22 @@ def run_perceptron():
 
     # Split the dataset into training and testing sets
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=10000)
-    y_train_onehot = pd.get_dummies(y_train.astype(int)).astype(int)
 
     # Add bias
     x_train.insert(0, 'Bias', 1)
     x_test.insert(0, 'Bias', 1)
 
-    w = train(x_train, y_train_onehot, 0.01, 0.1, 50)
+    w, loss_over_epoch, test_loss_over_epoch = train(x_train, y_train, x_test, y_test, 0.01, 0.1, 50)
     test(x_test, w)
     actual = y_test.astype(int)
     preds = x_test["preds"]
+
+    # Plot the loss graph
+    plt.plot(range(50), loss_over_epoch, test_loss_over_epoch, marker='o')
+    plt.xlabel('Epoch')
+    plt.ylabel('Zero-One Loss')
+    plt.title('Training Loss over Epochs')
+    plt.show()
 
     # generate confusion matrix
     test_cmatrix = confusion_matrix(actual, preds)
@@ -56,5 +61,5 @@ def run_perceptron():
 
 
 if __name__ == '__main__':
-    run_perceptron()
+    run_softmax()
 

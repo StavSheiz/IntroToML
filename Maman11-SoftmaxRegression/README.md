@@ -20,4 +20,3 @@ Sensitivity per class:
 * Class 8: 0.91
 * Class 9: 0.61
 
-The results of the Softmax algorithm are close to the Perceptron algorithm but usually a bit better after 50 iterations. 
